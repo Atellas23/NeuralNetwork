@@ -1,0 +1,200 @@
+<h1 id="neuralnetwork-library-and-package-documentation-v0.0.0."><code>NeuralNetwork</code> library and package documentation (v0.0.0).</h1>
+<h2 id="contents">Contents:</h2>
+<ol start="0" type="1">
+<li><a href="#0.-introduction-&amp;-usage">Introduction &amp; usage</a>.</li>
+<li><a href="#1.-remarks-on-user-defined-types-and-aliases-for-types">Notation, user-defined types and operators</a>.</li>
+<li><a href="#2.-exhaustive-review-of-all-declared-classes">Exhaustive review of classes</a>.</li>
+<li><a href="#3.-review-of-utility-functions-used-in-the-code">Utility functions</a>.</li>
+<li><a href="#4.-who-am-i">Who am I + contact info</a>.</li>
+<li><a href="#5.-to-do-list">To-Do list</a>.</li>
+</ol>
+<hr />
+<h2 id="introduction-usage.">0. Introduction &amp; usage.</h2>
+<p><code>NeuralNetwork</code> is a one-author project (<a href="#4.-who-am-i">me!</a>) consisting of creating an Artificial Neural Network library for the <strong>C++</strong> language. Its first version (0.0.0) was completed for release on my summer 2020 holidays. As of this first version, I have implemented regression MLPs, using the squared error loss function and the backpropagation algorithm.</p>
+<h3 id="how-to-use-neuralnetwork.">0.0. How to use <code>NeuralNetwork</code>.</h3>
+<p>As of now, to use the <code>NeuralNetwork</code> package you have two options. The <strong>first option</strong> is to use the header file <code>Neural.hh</code>. If you do this, you have to compile the library yourself by mimicking the following in your project <code>Makefile</code>:</p>
+<pre class="{makefile}"><code>CXXFLAGS = -Wall -std=c++17 -O2
+
+all: main
+
+clean:
+    rm -f main.exe main *.o
+
+main: main.o Neural.o
+    $(CXX) $^ -o $@
+
+main.o: main.cc Neural.hh
+Neural.o: Neural.cpp Neural.hh</code></pre>
+<p>This supposes that your main code is in a file called <code>main.cc</code> and that you have the <code>Neural.hh</code> and <code>Neural.cpp</code> in the same directory as this file. You can obviously adapt it to whatever needs you have. Please remember that this is open-source code, so you are completely free to go and change anything.</p>
+<p>Your <strong>second option</strong> is to just use the following line in your <strong>C++</strong> main file (or in the file where you want to use the library):</p>
+<pre class="{c++}"><code>#include &quot;&lt;path-to-header-file&gt;/neural&quot;</code></pre>
+<p>In this way, you can just compile the program as you were doing before, for example by using</p>
+<pre class="{sh}"><code>g++ -Wall -std=c++17 -O2 -o main main.cc</code></pre>
+<p>There are plans on adding a third option and dropping the first one. This new option would implement a CLI to read data, create MLPs, neuron layers and neurons and train them on said data. This new option is on schedule for version 0.1.0.</p>
+<h2 id="remarks-on-user-defined-types-and-aliases-for-types.">1. Remarks on user-defined types and aliases for types.</h2>
+<p>Throughout the documentation (and the code itself) <code>vd</code> is used as a <code>vector&lt;double&gt;</code> <strong>C++</strong> identifier. Likewise, <code>matd</code> refers to a <em>matrix double</em>, or <code>vector&lt;vd&gt;</code>, and <code>tend</code> refers to a <em>3-tensor double</em> (using tensor as the multidimensional array rather than the multilinear map), or a <code>vector&lt;matd&gt;</code>. This last definition is pretty loose on dimension consistency, as in the code itself it is often considered that 3-dimensional arrays can have slices of different dimensions. To refer to an activation function, the defined type <code>activation</code> is used as a <code>double [](double)</code>. Also (but less frequently) used is the alias <code>ui</code> for <code>unsigned int</code>. There is intent on dropping this last one.</p>
+<h3 id="user-defined-operators-on-the-user-defined-types.">1.0. User-defined operators on the user-defined types.</h3>
+<h4 id="vd.">1.0.0. <code>vd</code>.</h4>
+<p><code>vd</code> has three different user-defined operators: the first is <code>double operator*(const vd&amp;,const vd&amp;)</code>, which implements the scalar product between two same-dimensional vectors. The second one is the vector difference <code>vd operator-(const vd&amp;,const vd&amp;)</code>, which also does only work on a pair of same-dimensional vectors. The third one is the vector sum, <code>vd operator+(const vd&amp;,const vd&amp;)</code>.</p>
+<h4 id="matd.">1.0.1. <code>matd</code>.</h4>
+<p><code>matd</code> has three different user-defined operators: the first one is <code>matd operator*(const matd&amp;,const matd&amp;)</code>, which implements the well-known matrix multiplication. The second operator is the matrix difference <code>matd operator-(const matd&amp;,const matd&amp;)</code>, and the third one is the matrix sum <code>matd operator+(const matd&amp;,const matd&amp;)</code>. There has been no need to implement the determinant or the inverse of a matrix (yet). There is an additional user-defined operator that involves the <code>matd</code> class, and that is the matrix-vector product <code>vd operator*(const matd&amp;,const vd&amp;)</code>. As this involves both <code>vd</code> and <code>matd</code>, I do not count it as part of either.</p>
+<h4 id="tend.">1.0.2. <code>tend</code>.</h4>
+<p><code>tend</code> has only two user-defined operators, the 3-dimensional array difference and sum, <code>tend operator-(const tend&amp;,const tend&amp;)</code> and <code>tend operator+(const tend&amp;,const tend&amp;)</code>. There has been no need of implementing tensor contraction or the like.</p>
+<h2 id="exhaustive-review-of-all-declared-classes.">2. Exhaustive review of all declared classes.</h2>
+<h3 id="neuron.">2.0. <code>Neuron</code>.</h3>
+<p>The <code>Neuron</code> class is the base of all the other classes in this library. Its private attributes are a weight vector, <code>vd weights</code>, a local additive parameter called <code>double intercept</code>, an input dimension <code>ui inputDim</code> and a pointer to an activation function, <code>activation *act</code>. It also has many member functions, namely:</p>
+<h4 id="constructors.">2.0.0. Constructors.</h4>
+<p>I implemented constructors as I saw the need for them. In total, there are 8 <code>Neuron</code> constructors:</p>
+<ul>
+<li><code>Neuron(ui inDim, vd weights, double incpt, activation g) : weights(weights), intercept(incpt), inputDim(inDim), act(g) {}</code>.</li>
+<li><code>Neuron(ui inDim, activation g) : weights(vd(inDim, 0)), intercept(0.0), inputDim(inDim), act(g) { randomInitIncpt(); randomInitWeights(); }</code>.</li>
+<li><code>Neuron(ui inDim, vd weights, double incpt) : weights(weights), intercept(incpt), inputDim(inDim), act(tanh) {}</code>.</li>
+<li><code>Neuron(vd weights, activation g) : weights(weights), intercept(0.0), inputDim(weights.size()), act(g) { randomInitIncpt(); }</code>.</li>
+<li><code>Neuron(vd weights, double incpt) : weights(weights), intercept(incpt), inputDim(weights.size()), act(tanh) {}</code>.</li>
+<li><code>Neuron(ui inDim, vd weights) : weights(weights), intercept(0.0), inputDim(inDim), act(tanh) { randomInitIncpt(); }</code>.</li>
+<li><code>Neuron(ui inDim) : weights(vd(inDim, 0.0)), intercept(0.0), inputDim(inDim), act(tanh) { randomInitWeights(); randomInitIncpt(); }</code></li>
+<li><code>Neuron() : weights(vd(0)), intercept(0.0), inputDim(0), act(tanh) {}</code>.</li>
+</ul>
+<p>Note that the attributes of a particular <code>Neuron</code> object can be changed through the setter functions in the following section.</p>
+<h4 id="setters.">2.0.1. Setters.</h4>
+<p>The following member functions can be used to set a <code>Neuron</code> object attributes to a particular given value. - <code>void setInputDim(int)</code>: sets the neuron input dimension to the <code>int</code> parameter. - <code>void setActivation(activation)</code>: sets the neuron activation function to the <code>activation</code> parameter. - <code>void setWeights(vd)</code>: sets the neuron weights vector to the <code>vd</code> parameter. - <code>void setIncpt(double)</code>: sets the neuron intercept to the <code>double</code> parameter.</p>
+<h4 id="weights-and-intercept-random-initializers.">2.0.2. Weights and intercept random initializers.</h4>
+<p>The <code>Neuron</code> class has two different functions to initialize the weights and the intercept randomly. These are <code>void randomInitWeights()</code> and <code>void randomInitIncpt()</code>. They use a global normal distribution with zero mean and unit variance (<code>normal01</code>, together with a random engine <code>gen</code>) to set the values.</p>
+<h4 id="getters.">2.0.3. Getters.</h4>
+<p>The following functions are used to get the value of the neuron attributes. They do not stay up to date when the attributes are changed. - <code>int getInputDim() const</code>. - <code>vd getWeights() const</code>. - <code>activation *getAct() const</code>. - <code>double getIntercept() const</code>.</p>
+<h4 id="double-executeconst-vd-const.">2.0.4. <code>double execute(const vd &amp;) const</code>.</h4>
+<p>This function executes a neuron’s “operation”, that is, calculates its output based on an input <code>vd</code>.</p>
+<h4 id="double-getneuronrawconst-vd-const.">2.0.5. <code>double getNeuronRaw(const vd&amp;) const</code>.</h4>
+<p>This function returns the “raw” neuron output, this is, the scalar product of weights with the input <code>vd</code> parameter plus the neuron intercept, no activation function involved. This is primarily used as a utility functin to make the <code>NNet::train()</code> function more readable and understandable. <!---
+#### 2.0.6. `void train(const matd &)`.
+---></p>
+<h4 id="further-plans.">2.0.6. Further plans.</h4>
+<p>There is a plan in place to implement the <code>Neuron::train()</code> function using maximum likelihood arguments. This is not an easy thing in C++, so it is left for a future version.</p>
+<h3 id="layer.">2.1. <code>Layer</code>.</h3>
+<p>The <code>Layer</code> class is a utility class. It mainly represents a neuron array <code>vector&lt;Neuron&gt;</code>, which has an alias, <code>neuronArray</code>. Its private attributes are a name (<code>string</code>) and the layer’s units (<code>neuronArray</code>). It was basically made into a class in order to be able to add member functions to a <code>neuronArray</code>, which is not possible when just using a <code>vector&lt;Neuron&gt;</code>. It has a name field as I consider this to be a sufficiently structured object for the programmer to be able to distinguish easily between different <code>Layer</code> objects. The class has a number of member functions:</p>
+<h4 id="constructors.-1">2.1.0. Constructors.</h4>
+<p>The constructors implemented for the <code>Layer</code> class are the following ones:</p>
+<ul>
+<li><code>Layer(string id, ui size, ui inDim, activation h)</code>.</li>
+<li><code>Layer(string id, ui size, ui inDim)</code>.</li>
+<li><code>Layer()</code>.</li>
+</ul>
+<h4 id="setters.-1">2.1.1. Setters.</h4>
+<p>The setters for this class are:</p>
+<ul>
+<li><code>void setInputDim(int)</code>.</li>
+<li><code>void setLayerActivation(activation)</code>.</li>
+</ul>
+<p>There is also a special function to set at the same time the size, the input dimension and the activation function of a <code>Layer</code> object. The function is:</p>
+<ul>
+<li><code>void setupNeurons(int howMany, int inputDim, acivation g = tanh)</code>.</li>
+</ul>
+<p>It is mainly intended to be used after the <code>NNet::addLayer()</code> empty overload. It is also used in its non-empty overload <code>NNet::addLayer(int,activation)</code> to set up the neurons in the newly added layer according to the parameters.</p>
+<h4 id="getters.-1">2.1.2. Getters.</h4>
+<p>The getter functions for this class are:</p>
+<ul>
+<li><code>int getSize() const</code>.</li>
+<li><code>string getName() const</code>.</li>
+<li><code>neuronArray getNeurons() const</code>.</li>
+<li><code>matd getWeights() const</code>.</li>
+<li><code>vector&lt;activation*&gt; getLayerActivations() const</code>.</li>
+<li><code>vd getLayerIntercepts() const</code>.</li>
+</ul>
+<h4 id="neuron-operatorint-i.">2.1.3. <code>Neuron *operator[](int i)</code>.</h4>
+<p>This function is a workaround to be able to edit directly the parameters of a <code>Neuron</code> by reference. Note this cannot be done through the <code>Layer::getNeurons()</code> method.</p>
+<h4 id="vd-executeconst-vd-input-const.">2.1.3. <code>vd execute(const vd &amp;input) const</code>.</h4>
+<p>This function returns a vector with the outputs of all the neurons in the layer, using the <code>double Neuron::execute(const vd&amp;)</code>.</p>
+<h4 id="vd-getneuronrawsconst-vd-input-const.">2.1.4. <code>vd getNeuronRaws(const vd &amp;input) const</code>.</h4>
+<p>This function returns a vector with the <em>raw</em> outputs of the layers’ neuron, this is, without the activation function. <!---
+#### 2.1.5. `void train(const vd &) const`.
+---></p>
+<h3 id="nnet.">2.2. <code>NNet</code>.</h3>
+<p>The <code>NNet</code> class is the most important class we use in this package. An object of this class consists of a name (<code>string</code>), an array of <code>Layer</code> objects and a pair of <code>int</code> attributes, the input and the output dimension of the network. This is useful within the network’s inner workings, and is useful primarily when one creates an empty <code>NNet</code> object and wants to add a layer to it.</p>
+<h4 id="constructors.-2">2.1.0. Constructors.</h4>
+<p>As of now, there are four different constructors to construct a <code>NNet</code> object:</p>
+<ul>
+<li><code>NNet(string name, int inDim, int outDim, vector&lt;Layer&gt; layers)</code>. This first constructor uses all of the attributes of the class at play to create a network from some pre-defined layers. /* This constructor builds numLayers empty layers, which then have to be better specified with: size of the layers, activation function(s), etc</li>
+<li><code>NNet(string name, int inDim, int outDim, int numLayers)</code>. This constructor creates <code>numLayers</code> empty layers. Then, these have to be better specified using a number of member functions of the <code>Layer</code> or the <code>NNet</code> classes.</li>
+<li><code>NNet(string name, int inDim, int outDim)</code>. This constructor takes in the input and output dimensions and creates an almost-empty <code>NNet</code> object. The layers must be added after creation using the appropiate <code>addLayer()</code> overload.</li>
+<li><code>NNet()</code>. This creates an empty <code>NNet</code> object, which has to be better specified using the setter member functions.</li>
+</ul>
+<h4 id="setters.-2">2.1.1. Setters.</h4>
+<p>The setters for this class are pretty much self-explanatory.</p>
+<ul>
+<li><code>void setDim(ui in, ui out)</code>.</li>
+<li><code>void setWeights(const tend &amp;newWeights)</code>.</li>
+<li><code>void setName(string newName)</code>.</li>
+</ul>
+<h4 id="addlayer-overloads.">2.1.2. <code>addLayer()</code> overloads.</h4>
+<p>The member function <code>addLayer()</code> appends a <code>Layer</code> object at the end of the <code>layers</code> vector in the referenced <code>NNet</code> object. There are two ways to do this. The first overload is <code>void addLayer(int newSize, activation g)</code>, which adds a new layer that is of size <code>newSize</code> and has a layer-wide activation function, <code>g</code>. The second overload is <code>void addLayer()</code>, which adds a layer of the same size as the (previously) last one and with a the default layer-wide activation function <code>tanh</code>. Both overloads make sure that the input dimension of the newly added layer is the same as the size of the (previously) last layer.</p>
+<h4 id="insertlayerint-where-layer-what.">2.1.3. <code>insertLayer(int where, Layer what)</code>.</h4>
+<p>This function inserts a <code>Layer</code> object in the position specified. It is still in development so I do not recommend to use it, unless you take a look at the source code and know what you are doing and what you need to set after the insertion.</p>
+<h4 id="getters.-2">2.1.2. Getters.</h4>
+<p>The getters are pretty self-explanatory too. They are the following ones.</p>
+<ul>
+<li><code>string getName() const</code>.</li>
+<li><code>vector&lt;Layer&gt; getLayers() const</code>.</li>
+<li><code>int getDepth() const</code>: returns the network’s number of layers.</li>
+<li><code>tend getWeights() const</code>: returns a <code>tend</code> object with the weights indexed by layer-neuron-weight.</li>
+<li><code>vector&lt;int&gt; getDim() const</code>.</li>
+</ul>
+<h4 id="layer-operatorint-i">2.1.3. <code>Layer *operator[](int i)</code></h4>
+<p>As previously done within the <code>Layer</code> class, I needed an operator to be able to modify the layers of the network directly, without the use of special setter functions that used many parameters. Again, note this cannot be done through the <code>NNet::getLayers()</code> method.</p>
+<h4 id="matd-propagateforwardconst-vd-input.">2.1.4. <code>matd propagateForward(const vd &amp;input)</code>.</h4>
+<p>This function is a similar drill to the <code>execute</code> methods in the <code>Neuron</code> and <code>Layer</code> classes. It generates the outputs of all the neurons in the network and returns them in a two-dimensional array, indexed by layer-neuron.</p>
+<h4 id="void-trainconst-matd-data-int-targetcolumn-int-maxepochs-100-double-alphastep-0.05.">2.1.5. <code>void train(const matd &amp;data, int targetColumn, int maxEpochs = 100, double alphaStep = 0.05)</code>.</h4>
+<p>This function implements the Backpropagation Algorithm for regression MLP training. It has a target variable, a maximum number of iterations and a learning rate, known as the alpha parameter, which has a default value of 0.05. It uses a slightly tweaked version of the one present in my course notes of Machine Learning 1 (<em>Aprenentatge Automàtic 1</em>), which can be found <a href="https://www.github.com/Atellas23/apunts/tree/master/AA1/ML1.pdf">here</a>.</p>
+<h2 id="review-of-utility-functions-used-in-the-code.">3. Review of utility functions used in the code.</h2>
+<h3 id="void-print-overloads.">3.0. <code>void print()</code> overloads.</h3>
+<p>There are three <code>void print()</code> overloads in the code. They are:</p>
+<ul>
+<li><code>void print(const vd&amp;)</code>.</li>
+<li><code>void print(const matd&amp;)</code>.</li>
+<li><code>void print(const tend&amp;)</code>.</li>
+</ul>
+<p>The <code>vd</code> overload prints a vector in a line. The <code>matd</code> overload prints the matrix by lines, regarding the lines as vectors. Finally, the <code>tend</code> overload prints the 3-tensor by slices, printing a matrix each time.</p>
+<h3 id="matd-transposeconst-matd.">3.1. <code>matd transpose(const matd&amp;)</code>.</h3>
+<p>As the name suggests, this just returns the transpose of the given <code>matd</code>.</p>
+<h3 id="double-logisticdouble.">3.2. <code>double logistic(double)</code>.</h3>
+This is the implementation for the logistic function,
+<center>
+<figure>
+<img src = "https://wikimedia.org/api/rest_v1/media/math/render/svg/faaa0c014ae28ac67db5c49b3f3e8b08415a3f2b">
+<figcaption>
+Logistic function (from Wikipedia’s article on sigmoidal functions).
+</figure>
+</center>
+<p>It is a widely used activation function, and it can be directly invoked if you are using the library.</p>
+<h3 id="double-machineepsilon.">3.3. <code>double machineEpsilon()</code>.</h3>
+<p>This function calculates an approximation to the quantity known as the “machine epsilon”, the smallest possible double precision floating point number eps such that 1+eps&gt;1.</p>
+<h3 id="double-derivativeapproximationactivationdouble.">3.4. <code>double derivativeApproximation(activation,double)</code>.</h3>
+This function calculates a derivative approximation of the <code>activation</code> parameter on the point represented by the <code>double</code> parameter. It calculates it using the second order Taylor approximation,
+<center>
+<figure>
+<img src = "https://wikimedia.org/api/rest_v1/media/math/render/svg/8c47753768b4e184080c6782a3ee8ca9d8174b0a">
+<figcaption>
+Taylor second-order approximation for the first derivative (from Wikipedia’s article on numerical differentiation).
+</figure>
+</center>
+<h3 id="double-tensorl2normconst-tend.">3.5. <code>double tensorL2Norm(const tend&amp;)</code>.</h3>
+<p>This function calculates the L2 norm of a tensor, adding up all of its components squared and returning the square root of this quantity.</p>
+<h3 id="vd-removecolumnmatdint.">3.6. <code>vd removeColumn(matd&amp;,int)</code>.</h3>
+<p>This function takes a matrix reference <code>matd&amp;</code> and an integer <code>int</code> as parameters, and returns a copy of the column pointed at by the <code>int</code> parameter. Also, this column is erased from the matrix reference.</p>
+<h3 id="schur-overloads.">3.7. <code>schur()</code> overloads.</h3>
+<p>The Schur product of two matrices (or two-dimensional arrays, respectively two vectors) is the matrix (vector) resulting of multiplying each number in the first matrix (vector) by the number in the same position in the second one. It is an associative and commutative operation, and it is distributive with respect to the sum. The two overloads of this function, hence, are the vector Schur product <code>vd schur(const vd&amp;,const vd&amp;)</code> and the matrix Schur product <code>matd schur(const matd&amp;,const matd&amp;)</code>.</p>
+<h2 id="who-am-i.">4. Who am I.</h2>
+<p>My name’s Àlex. I’m a student at <strong>Universitat Politècnica de Catalunya (UPC-BarcelonaTech)</strong>, currently studying the Bachelors of <a href="https://www.fme.upc.edu/en/studies/degrees/bachelors-degree-in-mathematics-1">Mathematics</a> and <a href="https://www.dse.upc.edu">Data Science and Engineering</a> through the double-degree plan in <a href="https://www.cfis.upc.edu">CFIS</a>. I’m from a town called Arenys de Munt, a 40-minute car-drive from Barcelona. If you want to contact me, feel free to do so emailing me at <a href="mailto:alex.batlle01@gmail.com?subject=GitHub%20NeuralNetwork%20contact">alex.batlle01@gmail.com</a>.</p>
+<h2 id="to-do-list.">5. To-Do list.</h2>
+<p>To-do list in order of priority:</p>
+<ul>
+<li>Finish the implementation of the <code>NNet::insertLayer()</code> method. Namely, make sure that the layer after the inserted one has the correct input dimension, and that the layer behind the inserted one has the correct output dimension. Notice the cascade effect that this may have on the following layers in the network, and adapt it to the changes.</li>
+<li>Implement the delta rule in <code>void Layer::train()</code>.</li>
+<li>Implement the <code>void Neuron::train()</code> method.</li>
+<li>CLI to create, save, load and train objects of the declared classes.</li>
+<li>Additional library to read and write data to files.</li>
+<li>Study where can parallelism be exploited and add it efficiently.</li>
+<li>Implement connection dropout methods.</li>
+<li>Implement classification MLPs.</li>
+<li>Implement the <code>void NNet::train()</code> method for multi-dimensional targets.</li>
+<li>Write more documentation.</li>
+</ul>
