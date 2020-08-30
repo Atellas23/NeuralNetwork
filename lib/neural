@@ -167,6 +167,8 @@ public:
   These have to be then manually added, using the desired addLayer() method overload.
   */
   NNet(string name, int inDim, int outDim);
+  // Empty constructor with name
+  NNet(string name);
   // Empty constructor
   NNet();
   // Setter for the network's weights
@@ -680,6 +682,8 @@ NNet::NNet(string name, int inDim, int outDim) : name(name), layers(vector<Layer
 // Empty constructor
 NNet::NNet() : name("Net" + to_string(NetPool++)), layers(vector<Layer>(0)), inputDim(0), outputDim(0) {}
 
+NNet::NNet(string name) : name(name), layers(vector<Layer>(0)), inputDim(0), outputDim(0) {}
+
 void NNet::addLayer(int newSize, activation g) { layers.push_back(Layer("", newSize, (layers.size() ? layers.back().getSize() : inputDim), g)); }
 
 void NNet::addLayer() { layers.push_back(Layer("", (layers.size() ? layers.back().getSize() : inputDim),
@@ -687,7 +691,7 @@ void NNet::addLayer() { layers.push_back(Layer("", (layers.size() ? layers.back(
 
 void NNet::insertLayer(int where, Layer what)
 {
-  if (where >= layers.size() or where < 0)
+  if (where >= getDepth() or where < 0)
   {
     error(outOfRange);
     return;
