@@ -1,0 +1,140 @@
+#ifndef DATA_HANDLER
+#define DATA_HANDLER
+#ifndef VEC
+#define VEC
+#include <vector>
+#endif
+#ifndef IO
+#define IO
+#include <iostream>
+#endif
+#include <fstream>
+using namespace std;
+
+typedef vector<string> vs;
+typedef vector<double> vd;
+typedef vector<vd> matd;
+typedef vector<matd> tend;
+typedef unsigned int ui;
+
+/*
+This is a data handling header file. It can read and write data to a file,
+and also implements the class dataFrame.
+*/
+
+void trimWhitespace(string &s);
+bool isWord(string a);
+bool isNumber(string a);
+vs tokenize(string& s);
+
+// The DATAFRAME class
+class dataFrame {
+public:
+  /*
+  We will be just using the empty constructor, as the data is meant to
+  be read with the member function void read(const string &filename);.
+  */
+  dataFrame();
+  // Function to read data from a file
+  void read(string filename);
+  // Setter for the name
+  void setName(string name);
+  // Function to write data to a file
+  void write(string filename) const;
+  vector<string> colnames() const;
+  vector<string> rownames() const;
+  bool isFactor(string column) const;
+  bool isFactor(int column) const;
+  void print() const;
+
+private:
+  string _name;
+  matd _data;
+  vector<string> _colnames;
+  vector<string> _rownames;
+  // vector<bool> _isFactor;
+};
+
+
+dataFrame::dataFrame() : _name(""),_data(matd(0)), _colnames(vector<string>(0)),
+                         _rownames(vector<string>(0))//, _isFactor(vector<bool>(0))
+                         {}
+
+void dataFrame::read(string filename) {
+  ifstream file(filename);
+  if (not file.good()) {
+    cerr << "error: the file \"" << filename << "\" could not be loaded." << endl;
+    return;
+  }
+  while (not file.eof()) {
+    string buff;
+    getline(file, buff);
+    trimWhitespace(buff);
+    vs tkn = tokenize(buff);
+    
+    if (isWord(tkn[0])) {
+      _colnames = tkn; // column names row
+      _data.push_back(vd(tkn.size())); // initial empty row
+    }
+    else if (isNumber(tkn[0])) {
+      for (int i = 0; i < (int)tkn.size(); ++i) _data.back()[i] = stod(tkn[i]);
+      /* for (int i = 0; i < (int)_data.back().size(); ++i) cout << (i ? " " : "") << _data.back()[i];
+      cout << endl; */
+      _data.push_back(vd(tkn.size()));
+    }
+    else {
+      cerr << "error: could not read data format" << endl;
+      return;
+    }
+  }
+  _data.erase(_data.end()-1); // erase the last zeroes row
+}
+
+void dataFrame::print() const {
+  cout << endl << endl;
+  cout << "DATASET: "+_name << endl << endl;
+  bool namedRows = _rownames.size() > 0;
+  if (_colnames.size() > 0) {
+    if (namedRows) cout << "\t\t";
+    for (int i = 0; i < (int)_colnames.size(); ++i) cout << (i ? "\t" : "") << _colnames[i];
+    cout << endl;
+  }
+  for (int i = 0; i < (int)_data.size(); ++i) {
+    if (namedRows) cout << "\t\t";
+    for (int j = 0; j < (int)_data[i].size(); ++j) cout << (j ? "\t" : "") << _data[i][j];
+    cout << endl;
+  }
+  cout << endl << endl;
+}
+
+void dataFrame::setName(string name) { _name = name; }
+
+
+void trimWhitespace(string &s) {
+  while(s[0] == ' ') s.erase(s.begin());
+  while(s.back() == ' ') s.erase(s.end()-1);
+}
+
+vs tokenize(string& s) {
+  vs command;
+  string word = "";
+  int l = s.length();
+  for (int j = 0; j <= l; ++j) {
+    if (j == l or s[j] == ' ') {
+      command.push_back(word);
+      word = "";
+    }
+    else word = word + s[j];
+  }
+  return command;
+}
+
+bool isWord(string s) {
+  return (s[0] >= 'a' and s[0] <= 'z') or (s[0] >= 'A' and s[0] <= 'Z');
+}
+
+bool isNumber(string s) {
+  return s[0] >= '0' and s[0] <= '9';
+}
+
+#endif

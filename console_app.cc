@@ -1,63 +1,118 @@
+#ifndef IO
+#define IO
 #include <iostream>
+#endif
 #include <fstream>
 #include <string>
+#ifndef VEC
+#define VEC
 #include <vector>
+#endif
 #include <set>
-#include <queue>
+#include <map>
 #include "lib/neural"
+#include "lib/dataHandler"
 using namespace std;
-#define inProgress cout << "in progress" << endl
+#define inProgress cout << "I do not work correctly yet" << endl
 #define unrComm cout << "error: unrecognized command" << endl
 #define MAX_NETS 10
-vector<string> consoleLog;
-vector<string> recordLog;
+vs consoleLog;
+vs recordLog;
 bool recordTrigger = false;
 
+map<string,int> inModelList;
 vector<NNet*> modelList;
+map<string,int> inDatasets;
+vector<dataFrame*> datasets;
 
 set<string> names;
 
-void save_log(string filename, vector<string>& where = consoleLog) {
+void main_stream(const vs& c);
+
+void save_log(string filename, const vs& where = consoleLog) {
   ofstream logfile(filename);
   for (auto s : where) logfile << s << endl;
   logfile.close();
 }
 
-void log(string& s, vector<string>& where = consoleLog) {
+void log(string& s, vs& where = consoleLog) {
   where.push_back(s);
-}
-
-vector<string> tokenize(string& s) {
-  vector<string> command;
-  string word = "";
-  int l = s.length();
-  for (int j = 0; j <= l; ++j) {
-    if (s[j] == ' ' or j == l) {
-      command.push_back(word);
-      word = "";
-    }
-    else word = word + s[j];
-  }
-  return command;
 }
 
 void loadModel(const string& filename) { inProgress; }
 
-void loadInstructions(const string& filename) { inProgress; }
-
 void saveModel(const string& modelName, const string& filename) { inProgress; }
 
-void createModel(const string& modelname) { modelList.push_back(new NNet(modelname)); }
+void loadInstructions(const string& filename) {
+  ifstream file(filename);
+  if (not file.good()) {
+    cerr << "error: the file \"" << filename << "\" could not be loaded." << endl;
+    return;
+  }
+  string temp;
+  while (getline(file, temp) and temp != "end") {
+    vs comm = tokenize(temp);
+    main_stream(comm);
+  }
+}
+
+void loadData(const string& filename) {
+  inDatasets[filename] = (int)datasets.size();
+  datasets.push_back(new dataFrame());
+  datasets.back()->read(filename);
+  datasets.back()->setName(filename);
+}
+
+void createModel(const string& modelname) {
+  if (names.find(modelname) != names.end()) {
+    cout << "Please use a name that is not already a model." << endl;
+    return;
+  }
+  cout << "Creating model "+modelname+". Please answer a few questions." << endl
+       << "Do you have knowledge of the input and output dimensions of the model (y/n)? ";
+  char option;
+  while (cin >> option and option != 'y' and option != 'n') cout << "Please use 'y' for YES and 'n' for NO.\n";
+  if (option == 'n') {
+    names.insert(modelname);
+    inModelList[modelname] = (int)modelList.size();
+    modelList.push_back(new NNet(modelname));
+    return;
+  }
+  int in,out;
+  cout << "Please let me know first the input and second the output dimension: ";
+  cin >> in >> out;
+  cout << "Do you have knowledge of the number of layers you want to use (y/n)? ";
+  while (cin >> option and option != 'y' and option != 'n') cout << "Please use 'y' for YES and 'n' for NO.\n";
+  if (option == 'n') {
+    names.insert(modelname);
+    inModelList[modelname] = (int)modelList.size();
+    modelList.push_back(new NNet(modelname,in,out));
+    return;
+  }
+  cout << "Please let me know the desired number of layers: ";
+  int layrs;
+  cin >> layrs;
+  names.insert(modelname);
+  inModelList[modelname] = (int)modelList.size();
+  modelList.push_back(new NNet(modelname,in,out,layrs));
+}
 
 void printModelNames() {
   for (set<string>::iterator it = names.begin(); it != names.end(); ++it) cout << *it << endl;
 }
 
-void main_stream(const vector<string>& c) {
+void main_stream(const vs& c) {
   if (c[0] == "load") {
     if (c.size() < 2) unrComm;
-    else if (c[1] == "model") loadModel(c[3]);
-    else if (c[1] == "instructions") loadInstructions(c[3]);
+    else if (c[1] == "model") loadModel(c[2]);
+    else if (c[1] == "instructions") loadInstructions(c[2]);
+    else if (c[1] == "data") {
+      if (c.size() < 3) {
+        cout << "error: no file name entered" << endl;
+        return;
+      }
+      loadData(c[2]);
+    }
     else unrComm;
   }
   else if (c[0] == "save") {
@@ -70,52 +125,61 @@ void main_stream(const vector<string>& c) {
     else {
       recordTrigger = true;
       string d;
-      while (getline(cin, d)) {
+      cout << ">> ";
+      while (getline(cin, d) and d != "end") {
         log(d, recordLog);
         vector<string> comm = tokenize(d);
-        if (comm[0] == "end") break;
-        else main_stream(comm);
+        main_stream(comm);
+        cout << ">> ";
       }
       recordTrigger = false;
-      save_log("recording", recordLog);
+      save_log((c.size() == 2 ? c[1] : "recording"), recordLog);
     }
   }
   else if (c[0] == "create") {
-    if (c[1] == "model") {
+    if (c.size() < 2) {
+      cout << "error: incomplete command. Please specify what you want to create." << endl;
+      return;
+    }
+    else if (c[1] == "model") {
       if (modelList.size() >= MAX_NETS) {
-        cout << "The model heap is full! Do you want to evict the last model in the queue? (y/n)" << endl
-             << "The model to be evicted is " << modelList.front()->getName() << '.' << endl;
+        cout << "The model memory is full! Do you want to evict the last model in the queue? (y/n)" << endl
+             << "The model to be evicted is "+modelList.front()->getName()+"." << endl;
         char c;
         while (cin >> c and c != 'y' and c != 'n') cout << "Please use 'y' for yes and 'n' for no." << endl;
         if (c == 'n') {
           cout << "Did not create the model." << endl;
           return;
         }
-        cout << "Erasing the said model." << endl;
+        cout << "Erasing said model." << endl;
         delete modelList.front();
         modelList.erase(modelList.begin());
       }
-      else {
-        if (c[2] == "empty")
-          modelList.push_back(new NNet());
-        else {
-          names.insert(c[3]);
-          //modelList.push_back(new NNet(c[3]));
-          createModel(c[3]);
-        }
-      }
+      createModel(c[3]);
+    }
+    else {
+      cout << "error: invalid object creation" << endl;
+      return;
     }
   }
   else if (c[0] == "show") {
-    if (c[1] == "modelheap")
+    if (c[1] == "models")
       printModelNames();
+    else if (c[1] == "data") {
+      if (c.size() < 3) {
+        cout << "error: incomplete call to show data" << endl;
+        return;
+      }
+      datasets[inDatasets[c[2]]]->print();
+    }
+    else cout << "error: invalid object to show" << endl;
   }
   else unrComm;
 }
 
 
 int main() {
-  cout << "NeuralNetwork 0.0.0 console. Work by Atellas23." << endl;
+  cout << "NeuralNetwork 0.0.0 console. Work by Atellas23." << endl << endl;
   cout << "> ";
   string s;
   while (getline(cin, s)) {
