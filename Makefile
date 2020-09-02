@@ -9,3 +9,6 @@ console: console_app.cc
 testrun: clean console
 	./console
 	make clean
+
+documentation:
+	pandoc doc/doc.last.md -o doc/doc.last.html
