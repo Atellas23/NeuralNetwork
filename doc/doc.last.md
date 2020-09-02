@@ -1,16 +1,16 @@
 # `NeuralNetwork` library and package documentation (v0.0.0).
 ## Contents:
-0. [Introduction & usage](#0.-introduction-&-usage).
-1. [Notation, user-defined types and operators](#1.-remarks-on-user-defined-types-and-aliases-for-types).
-2. [Exhaustive review of classes](#2.-exhaustive-review-of-all-declared-classes).
-3. [Utility functions](#3.-review-of-utility-functions-used-in-the-code).
-4. [Who am I + contact info](#4.-who-am-i).
-5. [To-Do list](#5.-to-do-list).
+0. [Introduction & usage](#0-introduction-&-usage).
+1. [Notation, user-defined types and operators](#1-remarks-on-user-defined-types-and-aliases-for-types).
+2. [Exhaustive review of classes](#2-exhaustive-review-of-all-declared-classes).
+3. [Utility functions](#3-review-of-utility-functions-used-in-the-code).
+4. [Who am I + contact info](#4-who-am-i).
+5. [To-Do list](#5-to-do-list).
 
 ----------
 
 ## 0. Introduction & usage.
-`NeuralNetwork` is a one-author project ([me!](#4.-who-am-i)) consisting of creating an Artificial Neural Network library for the **C++** language. Its first version (0.0.0) was completed for release on my summer 2020 holidays. As of this first version, I have implemented regression MLPs, using the squared error loss function and the backpropagation algorithm.
+`NeuralNetwork` is a one-author project ([me!](#4-who-am-i)) consisting of creating an Artificial Neural Network library for the **C++** language. Its first version (0.0.0) was completed for release on my summer 2020 holidays. As of this first version, I have implemented regression MLPs, using the squared error loss function and the backpropagation algorithm.
 
 ### 0.0. How to use `NeuralNetwork`.
 As of now, to use the `NeuralNetwork` package you have two options. The **first option** is to use the header file `Neural.hh`. If you do this, you have to compile the library yourself by mimicking the following in your project `Makefile`:
