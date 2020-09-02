@@ -80,7 +80,6 @@ void createModel(const string& modelname) {
   cout << "Do you have knowledge of the number of layers you want to use (y/n)? ";
   while (cin >> option and option != 'y' and option != 'n') cout << "Please use 'y' for YES and 'n' for NO.\n";
   if (option == 'n') {
-    names.insert(modelname);
     inModelList[modelname] = (int)modelList.size();
     modelList.push_back(new NNet(modelname,in,out));
     return;
@@ -88,7 +87,6 @@ void createModel(const string& modelname) {
   cout << "Please let me know the desired number of layers: ";
   int layrs;
   cin >> layrs;
-  names.insert(modelname);
   inModelList[modelname] = (int)modelList.size();
   modelList.push_back(new NNet(modelname,in,out,layrs));
 }
