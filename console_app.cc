@@ -8,7 +8,6 @@
 #define VEC
 #include <vector>
 #endif
-#include <set>
 #include <map>
 #include "lib/neural"
 #include "lib/dataHandler"
@@ -24,8 +23,6 @@ map<string,int> inModelList;
 vector<NNet*> modelList;
 map<string,int> inDatasets;
 vector<dataFrame*> datasets;
-
-set<string> names;
 
 void main_stream(const vs& c);
 
@@ -64,7 +61,7 @@ void loadData(const string& filename) {
 }
 
 void createModel(const string& modelname) {
-  if (names.find(modelname) != names.end()) {
+  if (inModelList.find(modelname) != inModelList.end()) {
     cout << "Please use a name that is not already a model." << endl;
     return;
   }
@@ -73,7 +70,6 @@ void createModel(const string& modelname) {
   char option;
   while (cin >> option and option != 'y' and option != 'n') cout << "Please use 'y' for YES and 'n' for NO.\n";
   if (option == 'n') {
-    names.insert(modelname);
     inModelList[modelname] = (int)modelList.size();
     modelList.push_back(new NNet(modelname));
     return;
@@ -98,7 +94,8 @@ void createModel(const string& modelname) {
 }
 
 void printModelNames() {
-  for (set<string>::iterator it = names.begin(); it != names.end(); ++it) cout << *it << endl;
+  int modelNum = 0;
+  for (auto p : inModelList) cout << ++modelNum << ": "+p.first << endl;
 }
 
 void main_stream(const vs& c) {
@@ -152,7 +149,8 @@ void main_stream(const vs& c) {
           return;
         }
         cout << "Erasing said model." << endl;
-        delete modelList.front();
+        inModelList.erase(modelList.front()->getName());
+        // delete modelList.front();
         modelList.erase(modelList.begin());
       }
       createModel(c[3]);
