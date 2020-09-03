@@ -49,6 +49,7 @@ public:
 
 private:
   string _name;
+  string _filepath;
   matd _data;
   vector<string> _colnames;
   vector<string> _rownames;
@@ -56,11 +57,12 @@ private:
 };
 
 
-dataFrame::dataFrame() : _name(""),_data(matd(0)), _colnames(vector<string>(0)),
+dataFrame::dataFrame() : _name(""),_filepath(""),_data(matd(0)),_colnames(vector<string>(0)),
                          _rownames(vector<string>(0))//, _isFactor(vector<bool>(0))
                          {}
 
 void dataFrame::read(string filename) {
+  _filepath = filename;
   ifstream file(filename);
   if (not file.good()) {
     cerr << "error: the file \"" << filename << "\" could not be loaded." << endl;
@@ -92,7 +94,8 @@ void dataFrame::read(string filename) {
 
 void dataFrame::print() const {
   cout << endl << endl;
-  cout << "DATASET: "+_name << endl << endl;
+  cout << "DATASET: "+_name << endl 
+       << "FILEPATH: "+_filepath << endl << endl;
   bool namedRows = _rownames.size() > 0;
   if (_colnames.size() > 0) {
     if (namedRows) cout << "\t\t";
@@ -104,7 +107,7 @@ void dataFrame::print() const {
     for (int j = 0; j < (int)_data[i].size(); ++j) cout << (j ? "\t" : "") << _data[i][j];
     cout << endl;
   }
-  cout << endl << endl;
+  cout << endl;
 }
 
 void dataFrame::setName(string name) { _name = name; }

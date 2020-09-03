@@ -53,11 +53,11 @@ void loadInstructions(const string& filename) {
   }
 }
 
-void loadData(const string& filename) {
-  inDatasets[filename] = (int)datasets.size();
+void loadData(const string& name, const string& filename) {
+  inDatasets[name] = (int)datasets.size();
   datasets.push_back(new dataFrame());
   datasets.back()->read(filename);
-  datasets.back()->setName(filename);
+  datasets.back()->setName(name);
 }
 
 void createModel(const string& modelname) {
@@ -102,11 +102,11 @@ void main_stream(const vs& c) {
     else if (c[1] == "model") loadModel(c[2]);
     else if (c[1] == "instructions") loadInstructions(c[2]);
     else if (c[1] == "data") {
-      if (c.size() < 3) {
-        cout << "error: no file name entered" << endl;
+      if (c.size() < 4) {
+        cout << "error: load data needs a name for the dataset and a filepath" << endl;
         return;
       }
-      loadData(c[2]);
+      loadData(c[2],c[3]);
     }
     else unrComm;
   }
@@ -120,12 +120,12 @@ void main_stream(const vs& c) {
     else {
       recordTrigger = true;
       string d;
-      cout << ">> ";
+      cout << "[R]> ";
       while (getline(cin, d) and d != "end") {
         log(d, recordLog);
         vector<string> comm = tokenize(d);
         main_stream(comm);
-        cout << ">> ";
+        cout << "[R]> ";
       }
       recordTrigger = false;
       save_log((c.size() == 2 ? c[1] : "recording"), recordLog);
@@ -164,6 +164,10 @@ void main_stream(const vs& c) {
     else if (c[1] == "data") {
       if (c.size() < 3) {
         cout << "error: incomplete call to show data" << endl;
+        return;
+      }
+      if (inDatasets.find(c[2]) == inDatasets.end()) {
+        cout << "error: please use an existing dataset name" << endl;
         return;
       }
       datasets[inDatasets[c[2]]]->print();
