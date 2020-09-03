@@ -124,7 +124,7 @@ vs tokenize(string& s) {
   int l = s.length();
   for (int j = 0; j <= l; ++j) {
     if (j == l or s[j] == ' ') {
-      command.push_back(word);
+      if (word != "") command.push_back(word);
       word = "";
     }
     else word = word + s[j];

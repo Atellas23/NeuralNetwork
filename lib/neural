@@ -115,6 +115,8 @@ public:
   void setInputDim(int newDim);
   // Setter for the layer units activation function
   void setLayerActivation(activation g);
+  // Setter for the layer name
+  void setName(string newName);
   // Getter for the layer size
   int getSize() const;
   // Getter for the layer name
@@ -417,7 +419,7 @@ void print(const tend &t)
   int i = 0;
   for (matd m : t)
   {
-    cout << "Matrix at depth " << ++i << ":\n";
+    cout << "Weight matrix at depth " << ++i << ":\n";
     print(m);
   }
   cout << endl;
@@ -581,50 +583,52 @@ void Layer::setupNeurons(int howMany, int inputDim, activation g)
     cout << "Warning! This deletes the present neurons in the layer. Continue? (y/n)" << endl;
     char c;
     while (cin >> c and c != 'y' and c != 'n')
-      cout << "Please use 'y' for yes and 'n' for no." << endl;
+      cout << "Please use 'y' for YES and 'n' for NO." << endl;
     if (c == 'n')
       return;
     else if (c == 'y')
     {
       cout << "Deleting the current existing neurons in the layer..." << endl;
       units = neuronArray(howMany); // called empty constructor howMany times
-      for (Neuron neuron : units)
+      for (Neuron &neuron : units)
       {
         neuron.setInputDim(inputDim);
         neuron.randomInitWeights();
         neuron.randomInitIncpt();
         neuron.setActivation(g);
       }
-      cout << "Setting up " << howMany << " neurons in this layer, using the first neuron's activation as the new layer activation function." << endl
+      cout << "Setting up " << howMany << " neurons in this layer."
            << "The new neurons' input dimension is " << inputDim << ". If you want to change this, please refer to the documentation." << endl;
     }
   }
   else
   {
     units = neuronArray(howMany); // called empty constructor howMany times
-    for (Neuron neuron : units)
+    for (Neuron &neuron : units)
     {
       neuron.setInputDim(inputDim);
       neuron.randomInitWeights();
       neuron.randomInitIncpt();
       neuron.setActivation(g);
     }
-    cout << "Setting up " << howMany << " neurons in this layer, using the first neuron's activation as the new layer activation function." << endl
+    cout << "Setting up " << howMany << " neurons in this layer."
          << "The new neurons' input dimension is " << inputDim << ". If you want to change this, please refer to the documentation." << endl;
   }
 }
 
 void Layer::setInputDim(int newDim)
 {
-  for (Neuron neuron : units)
+  for (Neuron &neuron : units)
     neuron.setInputDim(newDim);
 }
 
 void Layer::setLayerActivation(activation g)
 {
-  for (Neuron neuron : units)
+  for (Neuron &neuron : units)
     neuron.setActivation(g);
 }
+
+void Layer::setName(string newName) { name = newName; }
 
 int Layer::getSize() const { return units.size(); }
 
