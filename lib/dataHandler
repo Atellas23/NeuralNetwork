@@ -39,6 +39,8 @@ public:
   void read(string filename);
   // Setter for the name
   void setName(string name);
+  // Getter for the dataframe data
+  matd getData() const;
   // Function to write data to a file
   void write(string filename) const;
   vector<string> colnames() const;
@@ -112,11 +114,17 @@ void dataFrame::print() const {
 
 void dataFrame::setName(string name) { _name = name; }
 
+matd dataFrame::getData() const { return _data; }
 
 void trimWhitespace(string &s) {
   while(s[0] == ' ') s.erase(s.begin());
   while(s.back() == ' ') s.erase(s.end()-1);
 }
+
+vs dataFrame::colnames() const { return _colnames; }
+
+vs dataFrame::rownames() const { return _rownames; }
+
 
 vs tokenize(string& s) {
   vs command;

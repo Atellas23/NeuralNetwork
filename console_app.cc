@@ -11,7 +11,9 @@
 #include <map>
 #include "lib/neural"
 #include "lib/dataHandler"
+
 using namespace std;
+
 #define inProgress cout << "I do not work correctly yet" << endl
 #define unrComm cout << "error: unrecognized command" << endl
 #define xivato cout << "SÓC UN XIVATO!" << endl
@@ -20,10 +22,8 @@ vs consoleLog;
 vs recordLog;
 bool recordTrigger = false;
 
-map<string,int> inModelList;
-vector<NNet*> modelList;
-map<string,int> inDatasets;
-vector<dataFrame*> datasets;
+map<string,NNet*> modelList;
+map<string,dataFrame*> datasets;
 map<string,activation*> activations;
 
 void main_stream(const vs& c);
@@ -36,9 +36,83 @@ void save_log(string filename, const vs& where = consoleLog) {
 
 void log(string& s, vs& where = consoleLog) { where.push_back(s); }
 
-void loadModel(const string& filename) { inProgress; }
+void loadModel(const string& filename) {
+  ifstream file(filename);
+  if (not file.good()) {
+    cout << "error: please use an existing file name" << endl;
+    return;
+  }
+  string temp;
+  getline(file,temp); // reads "modelname:" and then the model name
+  string modelname = tokenize(temp)[1];
+  modelList[modelname] = new NNet(modelname);
+  getline(file,temp); // reads "layers:" and then the number of layers
+  int depth = stoi(tokenize(temp)[1]);
+  int m;
+  vector<activation*> a;
+  tend modelWeights;
+  string act;
+  matd layerWeights, modelIntercepts;
+  for (int i = 0; i < depth; ++i) {
+    getline(file,temp); // reads "layer" and then the layer's number
+    // cout << temp << endl;
+    getline(file,temp); // reads "size" and then the layer's size
+    m = stoi(tokenize(temp)[1]);
+    // cout << temp << endl;
+    getline(file,temp); // reads the name of the activation function
+    act = temp;
+    // cout << act << endl;
+    getline(file,temp); // reads "parameters"
+    // cout << temp << endl;
+    vd neuronWeights(0);
+    for (int j = 0; j < m; ++j) { // read parameter matrix
+      getline(file, temp);
+      for (auto a : tokenize(temp))
+        neuronWeights.push_back(stod(a));
+      layerWeights.push_back(neuronWeights);
+    }
+    modelWeights.push_back(layerWeights);
+    if (i == 0) modelList[modelname]->setDim(tokenize(temp).size(),1); // for the moment, just 1-dimensional regression is supported
+    modelList[modelname]->addLayer(m,activations[act]);
+    getline(file,temp); // reads "intercepts"
+    vd layerIntercepts;
+    getline(file,temp);
+    for (auto a : tokenize(temp)) layerIntercepts.push_back(stod(a));
+    modelIntercepts.push_back(layerIntercepts);
+  }
+  modelList[modelname]->setWeights(modelWeights);
+  modelList[modelname]->setIntercepts(modelIntercepts);
+}
 
-void saveModel(const string& modelName, const string& filename) { inProgress; }
+void saveModel(const string& modelname, const string& filename) {
+  ofstream file(filename+".NNet");
+  NNet *mod = modelList[modelname];
+  file << "modelname: " << modelname << endl;
+  int m = mod->getDepth();
+  file << "layers: " << m << endl;
+  file << "spec" << endl;
+  for (int i = 0; i < m; ++i) {
+    Layer *l = mod->operator[](i);
+    file << "layer " << i << endl;
+    file << "size " << l->getSize() << endl;
+    // file << "input " << l->getNeurons().front().getInputDim();
+    activation *t = l->getLayerActivations().front();
+    if (t == activations["logistic"]) file << "logistic" << endl;
+    else if (t == activations["relu"]) file << "relu" << endl;
+    else if (t == activations["tanh"]) file << "tanh" << endl;
+    else file << "unknown" << endl;
+    file << "parameters" << endl;
+    matd temp = l->getWeights(); // the input dimension can be deduced from here when loading the object
+    for (auto vec : temp) {
+      for (int j = 0; j < (int)vec.size(); ++j) file << (j ? " " : "") << vec[j];
+      file << endl;
+    }
+    file << "intercepts" << endl;
+    vd incpts = l->getLayerIntercepts();
+    for (int j = 0; j < (int)incpts.size(); ++j) file << (j ? " " : "") << incpts[j];
+    file << endl;
+  }
+}
 
 void loadInstructions(const string& filename) {
   ifstream file(filename);
@@ -54,29 +128,27 @@ void loadInstructions(const string& filename) {
 }
 
 void loadData(const string& name, const string& filename) {
-  inDatasets[name] = (int)datasets.size();
-  datasets.push_back(new dataFrame());
-  datasets.back()->read(filename);
-  datasets.back()->setName(name);
+  datasets[name] = new dataFrame();
+  datasets[name]->read(filename);
+  datasets[name]->setName(name);
 }
 
 void createModel(const string& modelname, int inDim, int outDim, int numLayers) {
-  if (inModelList.find(modelname) != inModelList.end()) {
+  if (modelList.find(modelname) != modelList.end()) {
     cout << "Please use a name that is not already a model." << endl;
     return;
   }
   cout << "Creating model "+modelname+"." << endl;
-  inModelList[modelname] = (int)modelList.size();
-  modelList.push_back(new NNet(modelname,inDim,outDim,numLayers));
+  modelList[modelname] = new NNet(modelname,inDim,outDim,numLayers);
   //cout << "the segmentation fault is somehow past here?" << endl;
 }
 
 void showModelDetail(const string& modelname) {
-  if (inModelList.find(modelname) == inModelList.end()) {
+  if (modelList.find(modelname) == modelList.end()) {
     cout << "error: please request details from an existing model" << endl;
     return;
   }
-  NNet *model = modelList[inModelList[modelname]];
+  NNet *model = modelList[modelname];
   cout << endl << "MODEL NAME: "+model->getName() << endl
        << "  Input dimension: " << model->getDim()[0] << endl
        << "  Output dimension: " << model->getDim()[1] << endl
@@ -85,13 +157,44 @@ void showModelDetail(const string& modelname) {
   print(model->getWeights());
 }
 
+int find(const vs& v, const string& s) {
+  for (int i = 0; i < (int)v.size(); ++i) {
+    if (v[i] == s) return i;
+  }
+  return -1;
+}
+
+void trainModel(const string& modelname, const string& datasetname, const string& targetcolumn, int numepochs, double learningrate) {
+  if (modelList.find(modelname) == modelList.end()) {
+    cout << "error: please use an existing model to train" << endl;
+    return;
+  }
+  NNet *mod = modelList[modelname];
+  if (datasets.find(datasetname) == datasets.end()) {
+    cout << "error: please use an existing dataset to train the model" << endl;
+    return;
+  }
+  dataFrame *data = datasets[datasetname];
+  auto names = data->colnames();
+  int idx = find(data->colnames(), targetcolumn);
+  if (idx == -1) {
+    cout << "error: please use an existing column name in the dataset" << endl;
+    return;
+  }
+  if (learningrate > 1 or learningrate < 0) {
+    cout << "error: please use a positive learning rate strictly between 0 and 1" << endl;
+    return;
+  }
+  mod->train(data->getData(),idx,numepochs,learningrate);
+}
+
 void printModelNames() {
   int modelNum = 0;
-  for (auto p : inModelList) cout << ++modelNum << ": "+p.first << endl;
+  for (auto p : modelList) cout << ++modelNum << ": "+p.first << endl;
 }
 
 void modelEditSubconsole(const string& modelname) {
-  if (inModelList.find(modelname) == inModelList.end()) {
+  if (modelList.find(modelname) == modelList.end()) {
     cout << "error: please use an existing model" << endl;
     return;
   }
@@ -102,18 +205,18 @@ void modelEditSubconsole(const string& modelname) {
     vs comm = tokenize(temp);
     if (comm[0] == "addlayer") {
       if (comm.size() >= 3)
-        modelList[inModelList[modelname]]->addLayer(stoi(comm[1]),activations[comm[2]]);
+        modelList[modelname]->addLayer(stoi(comm[1]),activations[comm[2]]);
       else
-        modelList[inModelList[modelname]]->addLayer();
+        modelList[modelname]->addLayer();
     }
     else if (comm[0] == "editlayer") {
       if (comm.size() < 2)
         cout << "error: you must specify which layer to update" << endl;
-      else if (stoi(comm[1]) > modelList[inModelList[modelname]]->getDepth() or stoi(comm[1]) < 0)
+      else if (stoi(comm[1]) > modelList[modelname]->getDepth() or stoi(comm[1]) < 0)
         cout << "error: please refer to an existing layer in this model" << endl;
       else {
         cout << "Editing layer "+comm[1] << endl;
-        Layer *l = modelList[inModelList[modelname]]->operator[](stoi(comm[1]));
+        Layer *l = modelList[modelname]->operator[](stoi(comm[1]));
         cout << "[L"+comm[1]+"E]> ";
         while (getline(cin,temp) and temp != "end") {
           vs subcomm = tokenize(temp);
@@ -132,7 +235,7 @@ void modelEditSubconsole(const string& modelname) {
             }
             else if (subcomm[1] == "neurons") {
               if (subcomm.size() < 5)
-                cout << "error: you need to specify the number of neurons, the input dimension of the layer, and the layer-wide activaiton function" << endl;
+                cout << "error: you need to specify the number of neurons, the input dimension of the layer, and the layer-wide activation function" << endl;
               else l->setupNeurons(stoi(subcomm[2]),stoi(subcomm[3]),activations[subcomm[4]]);
             }
             else unrComm;
@@ -149,8 +252,17 @@ void modelEditSubconsole(const string& modelname) {
 void main_stream(const vs& c) {
   if (c.size() < 1) return;
   if (c[0] == "load") {
-    if (c.size() < 2) unrComm;
-    else if (c[1] == "model") loadModel(c[2]);
+    if (c.size() < 2) {
+      cout << "error: invalid load operation" << endl;
+      return;
+    }
+    else if (c[1] == "model") {
+      if (c.size() < 3) {
+        cout << "error: load model needs a file name from which to read the model" << endl;
+        return;
+      }
+      loadModel(c[2]);
+    }
     else if (c[1] == "instructions") loadInstructions(c[2]);
     else if (c[1] == "data") {
       if (c.size() < 4) {
@@ -159,12 +271,7 @@ void main_stream(const vs& c) {
       }
       loadData(c[2],c[3]);
     }
-    else unrComm;
-  }
-  else if (c[0] == "save") {
-    if (c.size() < 2) unrComm;
-    else if (c[1] == "model") saveModel(c[2], c[3]);
-    else unrComm;
+    else cout << "error: invalid load operation" << endl;
   }
   else if (c[0] == "record") {
     if (recordTrigger) cout << "already recording!" << endl;
@@ -188,9 +295,11 @@ void main_stream(const vs& c) {
       return;
     }
     else if (c[1] == "model") {
-      if (modelList.size() >= MAX_NETS) {
+      /* if (modelList.size() >= MAX_NETS) {
+        string name = modelList.begin();
         cout << "The model memory is full! Do you want to evict the last model in the queue? (y/n)" << endl
-             << "The model to be evicted is "+modelList.front()->getName()+"." << endl;
+             << "The model to be evicted is "+
+             +"." << endl;
         char c;
         while (cin >> c and c != 'y' and c != 'n') cout << "Please use 'y' for YES and 'n' for NO" << endl;
         if (c == 'n') {
@@ -201,7 +310,7 @@ void main_stream(const vs& c) {
         inModelList.erase(modelList.front()->getName());
         // delete modelList.front();
         modelList.erase(modelList.begin());
-      }
+      } */
       if (c.size() < 6) {
         cout << "error: must give the new model a name, input and output dimensions, and number of layers" << endl;
         return;
@@ -215,6 +324,10 @@ void main_stream(const vs& c) {
     }
   }
   else if (c[0] == "show") {
+    if (c.size() < 2) {
+      cout << "error: invalid show operation" << endl;
+      return;
+    }
     if (c[1] == "models")
       printModelNames();
     else if (c[1] == "data") {
@@ -222,11 +335,11 @@ void main_stream(const vs& c) {
         cout << "error: incomplete call to show data" << endl;
         return;
       }
-      if (inDatasets.find(c[2]) == inDatasets.end()) {
+      if (datasets.find(c[2]) == datasets.end()) {
         cout << "error: please use an existing dataset name" << endl;
         return;
       }
-      datasets[inDatasets[c[2]]]->print();
+      datasets[c[2]]->print();
     }
     else if (c[1] == "model")
       showModelDetail(c[2]);
@@ -239,6 +352,25 @@ void main_stream(const vs& c) {
     }
     modelEditSubconsole(c[1]);
   }
+  else if (c[0] == "train") {
+    if (c.size() < 6) {
+      cout << "error: you must specify all of the following:" << endl
+           << "- model to train" << endl
+           << "- dataset to train from" << endl
+           << "- target column of the dataset (name)" << endl
+           << "- max number of epochs in training (int)" << endl
+           << "- learning rate (double)" << endl;
+      return;
+    }
+    trainModel(c[1],c[2],c[3],stoi(c[4]),stod(c[5]));
+  }
+  else if (c[0] == "save") {
+    if (c.size() < 3) {
+      cout << "error: current functionality of the \"save\" command is just to save a model to a file" << endl;
+      return;
+    }
+    saveModel(c[1],c[2]);
+  }
   else unrComm;
 }
 
@@ -246,7 +378,7 @@ void main_stream(const vs& c) {
 void setups() {
   activations["tanh"] = tanh;
   activations["logistic"] = logistic;
-  // activations["relu"] = relu;
+  activations["relu"] = relu;
 }
 
 int main() {

@@ -34,6 +34,7 @@ void print(const vd &v);
 void print(const matd &v);
 void print(const tend &v);
 double logistic(double x);
+double relu(double x);
 double machineEpsilon();
 double derivativeApproximation(activation g, double x);
 vd derivativeApproximation(const vector<activation*> &g, const vd &x);
@@ -117,6 +118,8 @@ public:
   void setLayerActivation(activation g);
   // Setter for the layer name
   void setName(string newName);
+  // Setter for the layer's bias parameters
+  void setIntercepts(const vd &newIntercepts);
   // Getter for the layer size
   int getSize() const;
   // Getter for the layer name
@@ -175,6 +178,8 @@ public:
   NNet();
   // Setter for the network's weights
   void setWeights(const tend &newWeights);
+  // Setter for the network's bias parameters
+  void setIntercepts(const matd &newIntercepts);
   // Setter for the network's input and output dimensions
   void setDim(ui in, ui out);
   // Setter for the network's name
@@ -427,6 +432,8 @@ void print(const tend &t)
 
 double logistic(double x) { return 1.0 / (1.0 + exp(-x)); }
 
+double relu(double x) { return x > 0 ? x : 0; }
+
 double machineEpsilon()
 {
   double candidate = 1;
@@ -471,7 +478,7 @@ double tensorL2Norm(const tend &t)
 
 vd removeColumn(matd &m, int c)
 {
-  vd res(m.size(), 0.0);
+  vd res;
   for (vd &row : m)
   {
     res.push_back(row[c]);
@@ -630,6 +637,10 @@ void Layer::setLayerActivation(activation g)
 
 void Layer::setName(string newName) { name = newName; }
 
+void Layer::setIntercepts(const vd &newIntercepts) {
+  for (int i = 0; i < getSize(); ++i) units[i].setIncpt(newIntercepts[i]);
+}
+
 int Layer::getSize() const { return units.size(); }
 
 string Layer::getName() const { return name; }
@@ -732,10 +743,14 @@ tend NNet::getWeights() const
 }
 
 void NNet::setWeights(const tend &newWeights) {
-  for (int l = 0; l < (int)newWeights.size(); ++l) {
-    for (int n = 0; n < (int)newWeights[0].size(); ++n) 
+  for (int l = 0; l < getDepth(); ++l) {
+    for (int n = 0; n < layers[l].getSize(); ++n) 
       layers[l][n]->setWeights(newWeights[l][n]);
   }
+}
+
+void NNet::setIntercepts(const matd &newIntercepts) {
+  for (int i = 0; i < getDepth(); ++i) layers[i].setIntercepts(newIntercepts[i]);
 }
 
 void NNet::setDim(ui in, ui out) {
@@ -759,60 +774,84 @@ matd NNet::propagateFwd(const vd &input) const
 
 void NNet::train(const matd &data, int targetColumn, int maxEpochs, double alphaStep)
 {
-  tend entryWeights;
-  tend weightUpdates;
+  tend entryWeights(getDepth());
+  tend weightUpdates(getDepth());
   for (int l = 0; l < getDepth(); ++l)
     weightUpdates[l] = matd(layers[l].getSize(), vd(layers[l][0]->getInputDim(), 0.0));
   matd newData = data;
   vd target = removeColumn(newData, targetColumn); // copies and erases the specified column
-  int epoch = 0, nextCheckpoint = maxEpochs/10;
+  int epoch = 0, nextCheckpoint = maxEpochs/100;
   do
   {
     entryWeights = getWeights();
-    for (vd row : data)
+    /* tend weightUpdates = entryWeights;
+    for (auto &mat : weightUpdates) {
+      for (auto &vec : mat) {
+        for (auto &val : vec) val = 0;
+      }
+    } */
+    for (int i = 0; i < (int)newData.size(); ++i)
     {
+      vd row = newData[i];
       // forward step
+      // cout << "pre-propagateFwd" << endl;
       matd neuronOutputs = propagateFwd(row);
+      // cout << "post-propagateFwd" << endl;
       // backward step
       int h = getDepth() - 1; // this is the number of hidden layers
       matd deltas(h + 1);     // zero-indexed matrix of deltas
 
       // We initialize the different delta collections for each layer according to the size of the corresponding layer
-      for (int i = 0; i < h + 1; ++i)
-        deltas[i] = vd(layers[i].getSize(), 0.0);
+      for (int j = 0; j < h + 1; ++j)
+        deltas[j] = vd(layers[j].getSize(), 0.0);
 
-      deltas[h] = schur(derivativeApproximation(layers[h].getLayerActivations(),
+      // cout << "pre-schur" << endl;
+      // print(neuronOutputs[h]); print(target);
+
+      deltas[h] = vd(1, (neuronOutputs[h].front() - target[i])*derivativeApproximation(
+        layers[h].getLayerActivations().front(), (entryWeights[h] * neuronOutputs[h - 1]
+                                                 + layers[h].getLayerIntercepts()).front()));
+
+      /* deltas[h] = schur(derivativeApproximation(layers[h].getLayerActivations(),
                                                 entryWeights[h] * neuronOutputs[h - 1]
                                                 + layers[h].getLayerIntercepts()),
-                        neuronOutputs[h] - target);
+                        neuronOutputs[h] - target[i]); */
+      // cout << "post-schur" << endl;
 
-      /*deltas[h] = derivativeApproximation(layers[h].getLayerActivations(),
-                                          schur(entryWeights[h] * neuronOutputs[h - 1]
-                                          + layers[h].getLayerIntercepts(),
-                                          neuronOutputs[h] - target));*/
-
-      for (int i = h - 1; i >= 0; --i) {
-        deltas[i] = schur(transpose(layers[i+1].getWeights())*deltas[i+1],
-                          derivativeApproximation(layers[i].getLayerActivations(),
-                          layers[i].getNeuronRaws(neuronOutputs[i-1])));
+      for (int j = h - 1; j >= 0; --j) {
+        deltas[j] = schur(transpose(layers[j+1].getWeights())*deltas[j+1],
+                          derivativeApproximation(layers[j].getLayerActivations(),
+                          layers[j].getNeuronRaws(j ? neuronOutputs[j-1] : row)));
       }
 
-      tend weightUpdates = entryWeights;
+      // cout << "test" << endl;
       for (int l = 0; l < (int)weightUpdates.size(); ++l) {
         for (int j = 0; j < (int)weightUpdates[l].size(); ++j) {
-          for (int i = 0; i < (int)weightUpdates[l][j].size(); ++i)
-            weightUpdates[l][j][i] += alphaStep * deltas[l][j] * neuronOutputs[l-1][i];
+          for (int k = 0; k < (int)weightUpdates[l][j].size(); ++k) {
+            // cout << alphaStep * deltas[l][j] * (l ? neuronOutputs[l-1][k] : row[k]) << endl;
+            weightUpdates[l][j][k] += alphaStep * deltas[l][j] * (l ? neuronOutputs[l-1][k] : row[k]);
+            // cout << "weightUpdates["+to_string(l)+"]["+to_string(j)+"]["+to_string(k)+"] = " << weightUpdates[l][j][k] << " (row "+to_string(i)+")" << endl;
+          }
         }
       }
+      // cout << "test2" << endl;
     }
+    /* cout << "update at epoch " << epoch << endl;
+    print(weightUpdates); */
+    // cout << "pre-set weights" << endl;
     setWeights(entryWeights + weightUpdates);
+    // cout << "post-set weights" << endl;
+    ++epoch;
     if (epoch == nextCheckpoint) {
-      cout << (epoch/maxEpochs) * 100 << "% of the training complete." << endl;
-      nextCheckpoint += maxEpochs/10;
+      cout << ((double)epoch/maxEpochs) * 100 << "% of the training complete." << endl;
+      nextCheckpoint += maxEpochs/100;
     }
-  } while (epoch < maxEpochs and tensorL2Norm(getWeights() - entryWeights) > sqrt(eps));
+  } while (epoch < maxEpochs and tensorL2Norm(weightUpdates) > sqrt(eps));
   cout << "Training completed!" << endl << string(20,'*') << endl;
-  if (epoch < maxEpochs) cout << "Training was complete without getting to the maximum epochs." << endl;
+  if (epoch < maxEpochs) {
+    cout << "Training was complete without getting to the maximum epochs." << endl;
+    cout << "the weightUpdates tensorL2Norm was " << tensorL2Norm(weightUpdates) << endl;
+  }
   // } while (epoch < maxEpochs and relativeTensorDifferenceNorm(getWeights(), entryWeights) > 0.001);
   return;
 }
