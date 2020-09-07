@@ -114,6 +114,16 @@ void saveModel(const string& modelname, const string& filename) {
   }
 }
 
+void eraseModel(const string& modelname) {
+  delete modelList[modelname];
+  modelList.erase(modelname);
+}
+
+void eraseDataset(const string& datasetName) {
+  delete datasets[datasetName];
+  datasets.erase(datasetName);
+}
+
 void loadInstructions(const string& filename) {
   ifstream file(filename);
   if (not file.good()) {
@@ -140,7 +150,6 @@ void createModel(const string& modelname, int inDim, int outDim, int numLayers) 
   }
   cout << "Creating model "+modelname+"." << endl;
   modelList[modelname] = new NNet(modelname,inDim,outDim,numLayers);
-  //cout << "the segmentation fault is somehow past here?" << endl;
 }
 
 void showModelDetail(const string& modelname) {
@@ -191,6 +200,11 @@ void trainModel(const string& modelname, const string& datasetname, const string
 void printModelNames() {
   int modelNum = 0;
   for (auto p : modelList) cout << ++modelNum << ": "+p.first << endl;
+}
+
+void printDatasetNames() {
+  int datasetNum = 0;
+  for (auto p : datasets) cout << ++datasetNum << ": "+p.first << endl;
 }
 
 void modelEditSubconsole(const string& modelname) {
@@ -295,25 +309,25 @@ void main_stream(const vs& c) {
       return;
     }
     else if (c[1] == "model") {
-      /* if (modelList.size() >= MAX_NETS) {
-        string name = modelList.begin();
-        cout << "The model memory is full! Do you want to evict the last model in the queue? (y/n)" << endl
-             << "The model to be evicted is "+
-             +"." << endl;
-        char c;
-        while (cin >> c and c != 'y' and c != 'n') cout << "Please use 'y' for YES and 'n' for NO" << endl;
-        if (c == 'n') {
-          cout << "Did not create the model." << endl;
-          return;
-        }
-        cout << "Erasing said model." << endl;
-        inModelList.erase(modelList.front()->getName());
-        // delete modelList.front();
-        modelList.erase(modelList.begin());
-      } */
       if (c.size() < 6) {
         cout << "error: must give the new model a name, input and output dimensions, and number of layers" << endl;
         return;
+      }
+      if (modelList.size() >= MAX_NETS) {
+        cout << "The model memory is full! Do you want to evict a model? (y/n)" << endl;
+        char c;
+        while (cin >> c and c != 'y' and c != 'n') cout << "Please use 'y' for YES and 'n' for NO" << endl;
+        if (c == 'n') {
+          cout << "create operation canceled" << endl;
+          return;
+        }
+        cout << "Choose a model from below:" << endl;
+        printModelNames();
+        cout << "Model to be erased (name): ";
+        string name;
+        cin >> name;
+        cout << "Erasing model "+name+"." << endl;
+        eraseModel(name);
       }
       createModel(c[2],stoi(c[3]),stoi(c[4]),stoi(c[5]));
       return;
@@ -330,6 +344,8 @@ void main_stream(const vs& c) {
     }
     if (c[1] == "models")
       printModelNames();
+    else if (c[1] == "datasets")
+      printDatasetNames();
     else if (c[1] == "data") {
       if (c.size() < 3) {
         cout << "error: incomplete call to show data" << endl;
@@ -370,6 +386,30 @@ void main_stream(const vs& c) {
       return;
     }
     saveModel(c[1],c[2]);
+  }
+  else if (c[0] == "erase") {
+    if (c.size() < 3) {
+      cout << "error: invalid erase operation" << endl;
+      return;
+    }
+    if (c[1] == "model") {
+      if (modelList.find(c[2]) == modelList.end()) {
+        cout << "error: please use a valid model name" << endl;
+        return;
+      }
+      eraseModel(c[2]);
+    }
+    else if (c[1] == "dataset") {
+      if (datasets.find(c[2]) == datasets.end()) {
+        cout << "error: please use a valid dataset name" << endl;
+        return;
+      }
+      eraseDataset(c[2]);
+    }
+    else {
+      cout << "error: invalid erase operation" << endl;
+      return;
+    }
   }
   else unrComm;
 }
