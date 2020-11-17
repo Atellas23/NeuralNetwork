@@ -3,4 +3,4 @@
 
 You can have a look at the code (it's not much, but it's honest work!) or you can go straight into the sauce and use the library and package. You can read about how to use them in the documentation inside the `doc` folder. There is a documentation file for the library and another one for the package. Both detail how to proceed with the installation.
 
-Currently working on version 0.1.0.
+Currently working on version 0.0.1.
