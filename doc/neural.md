@@ -1,7 +1,7 @@
-# `NeuralNetwork` library and package documentation (v0.0.0).
+# `NeuralNetwork`: `neural` library documentation (v0.0.1).
 ## Contents:
-0. [Introduction & usage](#0-introduction-&-usage).
-1. [Notation, user-defined types and operators](#1-remarks-on-user-defined-types-and-aliases-for-types).
+0. [Introduction & general usage](#0-introduction-&-general-usage).
+1. [Notation, user-defined types and operators](#1-notation-user-defined-types-and-operators).
 2. [Exhaustive review of classes](#2-exhaustive-review-of-all-declared-classes).
 3. [Utility functions](#3-review-of-utility-functions-used-in-the-code).
 4. [Who am I + contact info](#4-who-am-i).
@@ -9,28 +9,11 @@
 
 ----------
 
-## 0. Introduction & usage.
+## 0. Introduction & general usage.
 `NeuralNetwork` is a one-author project ([me!](#4-who-am-i)) consisting of creating an Artificial Neural Network library for the **C++** language. Its first version (0.0.0) was completed for release on my summer 2020 holidays. As of this first version, I have implemented regression MLPs, using the squared error loss function and the backpropagation algorithm.
 
-### 0.0. How to use `NeuralNetwork`.
-As of now, to use the `NeuralNetwork` package you have two options. The **first option** is to use the header file `Neural.hh`. If you do this, you have to compile the library yourself by mimicking the following in your project `Makefile`:
-```{Makefile}
-CXXFLAGS = -Wall -std=c++17 -O2
-
-all: main
-
-clean:
-	rm -f main.exe main *.o
-
-main: main.o Neural.o
-	$(CXX) $^ -o $@
-
-main.o: main.cc Neural.hh
-Neural.o: Neural.cpp Neural.hh
-```
-This supposes that your main code is in a file called `main.cc` and that you have the `Neural.hh` and `Neural.cpp` in the same directory as this file. You can obviously adapt it to whatever needs you have. Please remember that this is open-source code, so you are completely free to go and change anything.
-
-Your **second option** is to just use the following line in your **C++** main file (or in the file where you want to use the library):
+### 0.0. How to use `neural`.
+To use the `neural` header/library you just have to use the following line in your **C++** main file (or in the file where you want to use the library):
 ```{c++}
 #include "<path-to-header-file>/neural"
 ```
@@ -38,10 +21,10 @@ In this way, you can just compile the program as you were doing before, for exam
 ```{sh}
 g++ -Wall -std=c++17 -O2 -o main main.cc
 ```
-There are plans on adding a third option and dropping the first one. This new option would implement a CLI to read data, create MLPs, neuron layers and neurons and train them on said data. This new option is on schedule for version 0.1.0.
+So, you can go ahead and use the functions and classes from the library without much difficulty.
 
-## 1. Remarks on user-defined types and aliases for types.
-Throughout the documentation (and the code itself) `vd` is used as a `vector<double>` **C++** identifier. Likewise, `matd` refers to a *matrix double*, or `vector<vd>`, and `tend` refers to a *3-tensor double* (using tensor as the multidimensional array rather than the multilinear map), or a `vector<matd>`. This last definition is pretty loose on dimension consistency, as in the code itself it is often considered that 3-dimensional arrays can have slices of different dimensions. To refer to an activation function, the defined type `activation` is used as a `double [](double)`. Also (but less frequently) used is the alias `ui` for `unsigned int`. There is intent on dropping this last one.
+## 1. Notation, user-defined types and operators.
+Throughout the documentation (and the code itself) `vd` is used as a `vector<double>` **C++** identifier. Likewise, `matd` refers to a *matrix double*, or `vector<vd>`, and `tend` refers to a *3-tensor double* (using tensor as the multidimensional array concept rather than the multilinear map), or a `vector<matd>`. Both `matd` and `tend` have little regard towards dimension consistency, as in the code itself it is often considered that both 2- and 3-dimensional arrays can have slices of different dimensions. To refer to an activation function, the defined type `activation` is used as a `double [](double)`. Also (but less frequently) used is the alias `ui` for `unsigned int`. There is intent on dropping this last one.
 
 ### 1.0. User-defined operators on the user-defined types.
 
@@ -205,7 +188,7 @@ The `vd` overload prints a vector in a line. The `matd` overload prints the matr
 As the name suggests, this just returns the transpose of the given `matd`.
 
 ### 3.2. `double logistic(double)`.
-This is the implementation for the logistic function,
+This function implements the logistic map,
 <center>
 <figure>
 <img src = "https://wikimedia.org/api/rest_v1/media/math/render/svg/faaa0c014ae28ac67db5c49b3f3e8b08415a3f2b">
@@ -218,13 +201,7 @@ It is a widely used activation function, and it can be directly invoked if you a
 This function calculates an approximation to the quantity known as the "machine epsilon", the smallest possible double precision floating point number eps such that 1+eps>1.
 
 ### 3.4. `double derivativeApproximation(activation,double)`.
-This function calculates a derivative approximation of the `activation` parameter on the point represented by the `double` parameter. It calculates it using the second order Taylor approximation,
-<center>
-<figure>
-<img src = "https://wikimedia.org/api/rest_v1/media/math/render/svg/8c47753768b4e184080c6782a3ee8ca9d8174b0a">
-<figcaption> Taylor second-order approximation for the first derivative (from Wikipedia's article on numerical differentiation).
-</figure>
-</center>
+This function calculates a derivative approximation of the `activation` parameter on the point represented by the `double` parameter. It calculates it using the second order Taylor derivative approximation.
 
 ### 3.5. `double tensorL2Norm(const tend&)`.
 This function calculates the L2 norm of a tensor, adding up all of its components squared and returning the square root of this quantity.
@@ -236,18 +213,24 @@ This function takes a matrix reference `matd&` and an integer `int` as parameter
 The Schur product of two matrices (or two-dimensional arrays, respectively two vectors) is the matrix (vector) resulting of multiplying each number in the first matrix (vector) by the number in the same position in the second one. It is an associative and commutative operation, and it is distributive with respect to the sum. The two overloads of this function, hence, are the vector Schur product `vd schur(const vd&,const vd&)` and the matrix Schur product `matd schur(const matd&,const matd&)`.
 
 ## 4. Who am I.
-My name's Àlex. I'm a student at **Universitat Politècnica de Catalunya (UPC-BarcelonaTech)**, currently studying the Bachelors of [Mathematics](https://www.fme.upc.edu/en/studies/degrees/bachelors-degree-in-mathematics-1) and [Data Science and Engineering](https://www.dse.upc.edu) through the double-degree plan in [CFIS](https://www.cfis.upc.edu). I'm from a town called Arenys de Munt, a 40-minute car-drive from Barcelona. If you want to contact me, feel free to do so emailing me at [alex.batlle01@gmail.com](mailto:alex.batlle01@gmail.com?subject=GitHub%20NeuralNetwork%20contact).
+My name's Àlex. I'm a student at **Universitat Politècnica de Catalunya (UPC-BarcelonaTech)**, currently studying the Bachelors of [Mathematics](https://www.fme.upc.edu/en/studies/degrees/bachelors-degree-in-mathematics-1) and [Data Science and Engineering](https://www.dse.upc.edu) through the double-degree plan at [CFIS](https://www.cfis.upc.edu). I'm from a town called Arenys de Munt, a 40-minute car-drive from Barcelona. If you want to contact me, feel free to do so emailing me at [alex.batlle01@gmail.com](mailto:alex.batlle01@gmail.com?subject=GitHub%20NeuralNetwork%20contact).
 
 ## 5. To-Do list.
 To-do list in order of priority:
 
+- Write more documentation.
+- Control the network parameter growth, and if needed, regularize the parameter learning pro
+- Add **Radial Basis Function** models.
+- Add genetic training methods for models. In this regard,
+  - Particle Swarm Optimization
+  - Ant Colony Optimization
+  - Usual Genetic Algorithm
+- Add meta-heuristic training methods to train models in a more understandable and adaptative way.
+- Add **Extreme Learning Machines** as a usable model class.
 - Finish the implementation of the `NNet::insertLayer()` method. Namely, make sure that the layer after the inserted one has the correct input dimension, and that the layer behind the inserted one has the correct output dimension. Notice the cascade effect that this may have on the following layers in the network, and adapt it to the changes.
 - Implement the delta rule in `void Layer::train()`.
 - Implement the `void Neuron::train()` method.
-- CLI to create, save, load and train objects of the declared classes.
-- Additional library to read and write data to files.
 - Study where can parallelism be exploited and add it efficiently.
 - Implement connection dropout methods.
 - Implement classification MLPs.
 - Implement the `void NNet::train()` method for multi-dimensional targets.
-- Write more documentation.

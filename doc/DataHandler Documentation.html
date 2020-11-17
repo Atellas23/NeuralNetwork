@@ -1,0 +1,52 @@
+<h1 id="neuralnetwork-datahandler-library-documentation-v0.0.1."><code>NeuralNetwork</code>: <code>dataHandler</code> library documentation (v0.0.1).</h1>
+<h2 id="contents">Contents:</h2>
+<ol start="0" type="1">
+<li><a href="#0-introduction-&amp;-general-usage">Introduction &amp; general usage</a>.</li>
+<li><a href="#1-notation-and-user-defined-types">Notation and user-defined types</a>.</li>
+<li><a href="#2-review-of-the-dataFrame-class">Review of the <code>dataFrame</code> class</a>.</li>
+<li><a href="#3-review-of-utility-functions-used-in-the-code">Utility functions</a>.</li>
+<li><a href="#4-who-am-i">Who am I + contact info</a>.</li>
+<li><a href="#5-to-do-list">To-Do list</a>.</li>
+</ol>
+<hr />
+<h2 id="introduction-general-usage.">0. Introduction &amp; general usage.</h2>
+<p>The <code>dataHandler</code> header/library is a C++ header file that implements data handling methods: mainly, a dataFrame class, read/write to file opertaions and string handling methods.</p>
+<p>one-author project (<a href="#2-who-am-i">me!</a>), aiming at creating a console app to use the <code>NeuralNetwork</code> library capabilities without having to hardcode the operations and focusing more on the “what to do” instead of the “how to do it”. In this sense, this package is a functional approach to the already existing declarative approach.</p>
+<h3 id="how-to-use-datahandler.">0.0. How to use <code>dataHandler</code>.</h3>
+<p>To use the <code>dataHandler</code> header/library you just have to use the following line in your <strong>C++</strong> main file (or in the file where you want to use the library):</p>
+<pre class="{c++}"><code>#include &quot;&lt;path-to-header-file&gt;/dataHandler&quot;</code></pre>
+<p>In this way, you can just compile the program as you were doing before, for example by using</p>
+<pre class="{sh}"><code>g++ -Wall -std=c++17 -O2 -o main main.cc</code></pre>
+<p>So, you can go ahead and use the functions and classes from the library without much difficulty.</p>
+<h2 id="notation-and-user-defined-types.">1. Notation and user-defined types.</h2>
+<p>Throughout the documentation (and the code itself) <code>vd</code> is used as a <code>vector&lt;double&gt;</code> <strong>C++</strong> identifier. Likewise, <code>vs</code> refers to a <code>vector&lt;string&gt;</code>, <code>matd</code> refers to a <code>vector&lt;vd&gt;</code> and <code>tend</code> refers to a <em>3-tensor double</em> (using tensor as the multidimensional array concept rather than the multilinear map), or a <code>vector&lt;matd&gt;</code>. Both <code>matd</code> and <code>tend</code> have little regard towards dimension consistency, as in the code itself it is often considered that both 2- and 3-dimensional arrays can have slices of different dimensions.</p>
+<h2 id="review-of-the-dataframe-class.">2. Review of the <code>dataFrame</code> class.</h2>
+<p>The <code>dataFrame</code> class is the only class declared in this header file. It implements the common concept of a dataset or data frame. Although still in development, it supports numerical matrices with named columns. The class can read from a file, write to a file, wrtie data to the console, retrieve its underlying data and the names of each column.</p>
+<h4 id="constructors.">2.0. Constructors.</h4>
+<p>There is just one constructor for the <code>dataFrame</code> class, and it’s the empty constructor. The idea here was to create an empty object that could then be used to load data. The constructor is:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><a class="sourceLine" id="cb3-1" title="1">dataFrame() : _name(<span class="st">&quot;&quot;</span>), _filepath(<span class="st">&quot;&quot;</span>), _data(matd(<span class="dv">0</span>)), _colnames(vs(<span class="dv">0</span>)),</a>
+<a class="sourceLine" id="cb3-2" title="2">              _rownames(vs(<span class="dv">0</span>)) {}</a></code></pre></div>
+<h4 id="setters.">2.1. Setters.</h4>
+<p>The following member functions can be used to set a <code>dataFrame</code> object attributes to a particular given value. - <code>void read(string)</code>: reads the data in the file represented by the <code>string</code> parameter and saves it to the data frame data matrix. - <code>void setName(string)</code>: sets the data frame name to the <code>string</code> parameter.</p>
+<h4 id="getters.">2.2. Getters.</h4>
+<p>The following functions are used to get the value of the data frame attributes. - <code>matd getData() const</code>: it returns the data of the data frame in a matrix form. - <code>vs colnames() const</code>: returns the column names of the dataset. - <code>vs rownames() const</code>: returns the row names of the dataset (dev).</p>
+<h4 id="void-print-const.">2.4. <code>void print() const</code>.</h4>
+<p>This function prints the data frame to the console standard output, detailing its name and its file path relative to the one where the program is.</p>
+<h4 id="void-writestring-const.">2.3. <code>void write(string) const</code>.</h4>
+<p>This function writes the data frame to the file indicated by the <code>string</code> parameter.</p>
+<h2 id="review-of-utility-functions-used-in-the-code.">3. Review of utility functions used in the code.</h2>
+<h3 id="void-trimwhitespacestring-.">3.0. <code>void trimWhitespace(string &amp;)</code>.</h3>
+<p>This function trims the whitespaces at the end and at the beginning of the given string.</p>
+<h3 id="bool-iswordstring.">3.1. <code>bool isWord(string)</code>.</h3>
+<p>Returns <code>true</code> if the string starts with a letter, and false otherwise.</p>
+<h3 id="bool-isnumberstring.">3.2. <code>bool isNumber(string)</code>.</h3>
+<p>Returns <code>true</code> if the string starts with a number, and false otherwise.</p>
+<h3 id="vs-tokenizestring-.">3.3. <code>vs tokenize(string &amp;)</code>.</h3>
+<p>Returns a vector of strings that correspond to each “word” in the original string, separated by whitespaces. (in dev)</p>
+<h2 id="who-am-i.">4. Who am I.</h2>
+<p>My name’s Àlex. I’m a student at <strong>Universitat Politècnica de Catalunya (UPC-BarcelonaTech)</strong>, currently studying the Bachelors of <a href="https://www.fme.upc.edu/en/studies/degrees/bachelors-degree-in-mathematics-1">Mathematics</a> and <a href="https://www.dse.upc.edu">Data Science and Engineering</a> through the double-degree plan in <a href="https://www.cfis.upc.edu">CFIS</a>. I’m from a town called Arenys de Munt, a 40-minute car-drive from Barcelona. If you want to contact me, feel free to do so emailing me at <a href="mailto:alex.batlle01@gmail.com?subject=GitHub%20NeuralNetwork%20contact">alex.batlle01@gmail.com</a>.</p>
+<h2 id="to-do-list.">5. To-Do list.</h2>
+<p>To-do list in order of priority:</p>
+<ul>
+<li>Write more documentation.</li>
+</ul>

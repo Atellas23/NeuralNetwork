@@ -1,0 +1,60 @@
+<h1 id="neuralnetwork-full-package-documentation-v0.0.1."><code>NeuralNetwork</code>: full package documentation (v0.0.1).</h1>
+<h2 id="contents">Contents:</h2>
+<ol start="0" type="1">
+<li><a href="#0-introduction-&amp;-general-usage">Introduction &amp; general usage</a>.</li>
+<li><a href="#1-libraries-that-the-CLI-uses">Libraries that the CLI uses</a>.</li>
+<li><a href="#2-available-operations-on-models-and-datasets">Available operations on models and datasets</a>.</li>
+<li><a href="#3-who-am-i">Who am I + contact info</a>.</li>
+<li><a href="#4-to-do-list">To-Do list</a>.</li>
+</ol>
+<hr />
+<h2 id="introduction-general-usage.">0. Introduction &amp; general usage.</h2>
+<p>The <code>NeuralNetwork</code> package is a one-author project (<a href="#2-who-am-i">me!</a>), aiming at creating a console app to use the <code>NeuralNetwork</code> library capabilities without having to hardcode the operations and focusing more on the “what to do” instead of the “how to do it”. In this sense, this package is a functional approach to the already existing declarative approach.</p>
+<h3 id="how-to-use-the-neuralnetwork-console.">0.0. How to use the <code>NeuralNetwork</code> console.</h3>
+<p>To use the console app, you will have to compile <code>console_app.cc</code>. This can be done using the provided <code>Makefile</code>, with the instruction <code>make console</code>, or with the usual <code>g++ -Wall -o console console_app.cc -O2 -D_GLIBCXX_DEBUG -std=c++17</code>. I strongly advice to use the <code>-D_GLIBCXX_DEBUG</code>, as it prints a warning whenever your program tries to access out-of-range positions in an array.</p>
+<h2 id="libraries-that-the-cli-uses.">1. Libraries that the CLI uses.</h2>
+<p>This console app uses the libraries <code>neural</code> and <code>dataHandler</code> from the <code>lib</code> folder. Both libraries are created and maintained by me. You can have more information on both in their respective documentation files. On a short note, <code>neural</code> is the header that implements the multi-layer perceptron classes, creation, edition and training methods, and some utility functions. <code>dataHandler</code> is the header charged with the task of implementing the dataset class, its creation methods, and the interactions with persistent text files.</p>
+<h2 id="available-operations-on-models-and-datasets.">2. Available operations on models and datasets.</h2>
+<h3 id="models">2.0. Models</h3>
+<p>You can create, erase, edit and train models with this app. We will go through the different commands with an example. Please note that I will be using Windows Subsystem for Linux in the Windows Terminal app, in Windows 10. You shouldn’t have any problem if you are using a macOS or a native Linux environment. The use cases are the following:</p>
+<ul>
+<li><strong>Creating a model:</strong> The first step in creating a model is tell the console to instantiate an object of the <code>NNet</code> class. This is done by telling the console <code>create model {name} {input dimension} {output dimension} {number of layers}</code>. Usually, and until at least the next full version (1.0.0), output dimension will be 1. Do not worry if you have to change these values afterwards, this is just to initialize a model. Obviously, you can not use the same name for two models, so make sure that you do not. Our example will be the following model: we create a model named <code>elon</code>, which will have an input dimension of 7 and an output dimension of 1, with an initial 0 layers:</li>
+</ul>
+<figure>
+<img src="modelCreation.jpg" alt="modelCreation" /><figcaption>modelCreation</figcaption>
+</figure>
+<p>Note that everything that is a model is conveniently colored in <span style="color:red">red</span>. After you have created the model, make sure your model exists by typing <code>show models</code>, and if you are very paranoid, <code>show model {model name}</code> will print the details of said model. After this first (dull, but important) step, you can proceed to add layers to it, or to edit the existing layers. This is done, respectively, through the Model Edit and Layer Edit subconsoles, which I will explain now. - <strong>Editing a model:</strong> When you want to edit a model, you just have to tell the console to <code>edit</code> a model name. Then, a prefix in the command line will appear, <code>[ME]</code>, indicating we are in the <strong>M</strong>odel <strong>E</strong>dit subconsole. In our example, we want to edit <code>elon</code>, so we will tell the console to <code>edit elon</code>:</p>
+<figure>
+<img src="modelEditing.jpg" alt="modelEditing" /><figcaption>modelEditing</figcaption>
+</figure>
+<p>Now we can add multiple layers to it. I will go for 3 layers of sizes 3, 5, and 2, and activations ReLU, tanh and logistic. And, we can’t forget to add the final layer, which will have a size of 1, and a logistic activation, for example. The weights of each neuron in the network are randomly initialized using a zero-centered unit-variance normal distribution. Now, if we want to see again the details of our model, we tell the console to <code>end</code> the model editing and then, to show us <code>elon</code>:</p>
+<figure>
+<img src="modelDetail.jpg" alt="modelDetail" /><figcaption>modelDetail</figcaption>
+</figure>
+<p>If we wanted to, we could also edit a particular layer of the model. Say we want to change the activation function of the last layer from logistic to ReLU. We type in <code>edit elon</code> again, and within the model edit subconsole, we tell the console to <code>editlayer 3</code>:</p>
+<figure>
+<img src="modelEditLayer.jpg" alt="modelEditLayer" /><figcaption>modelEditLayer</figcaption>
+</figure>
+<p>Observe that the console immediately shows us a warning message about the layer editing subconsole. Inside the <strong>L</strong>ayer <strong>3 E</strong>dit subconsole <code>[L3E]</code>, we tell the console to <code>set activation relu</code>. We then <code>end</code> twice to return to the main console, and <code>show model elon</code>. The weights have not changed, but the activation functions have (we cannot see this though). We can also set a name to a layer, though this is a feature more keen to the library usage of the <code>neural</code> header. - <strong>Training a model:</strong> If we want to train a model, we should first have a dataset to train from. Note that if you tell the console to <code>show datasets</code>, the list will be empty. So, we should load a dataset from a file. In this case, we will not go into a lot of detail, as this is a matter of section 2.1. We tell the console to load a dataset that looks like this:</p>
+<pre><code>col1 col2 col3 col4 col5 col6 col7 col8
+   1    2    3    4    5    6    7   28
+   2    3    4    5    6    7    8   35
+   3    4    5    6    7    8    9   42
+   4    5    6    7    8    9   10   49
+   5    6    7    8    9   10   11   56
+   6    7    8    9   10   11   12   63
+   7    8    9   10   11   12   13   70</code></pre>
+<p>Please note that it is not needed that the dataset is perfectly aligned, this is just for aesthetic purposes. Now, to train the model on this dataset, we tell the console to train the model <code>elon</code> to compute column ‘col8’ of our dataset using the other seven columns:</p>
+<figure>
+<img src="modelTraining.jpg" alt="modelTraining" /><figcaption>modelTraining</figcaption>
+</figure>
+<p>As a last thing, we can save the model to a file using <code>save elon elonModel</code>, and we will get a <code>.NNet</code> file containing the model information.</p>
+<h2 id="who-am-i.">3. Who am I.</h2>
+<p>My name’s Àlex. I’m a student at <strong>Universitat Politècnica de Catalunya (UPC-BarcelonaTech)</strong>, currently studying the Bachelors of <a href="https://www.fme.upc.edu/en/studies/degrees/bachelors-degree-in-mathematics-1">Mathematics</a> and <a href="https://www.dse.upc.edu">Data Science and Engineering</a> through the double-degree plan in <a href="https://www.cfis.upc.edu">CFIS</a>. I’m from a town called Arenys de Munt, a 40-minute car-drive from Barcelona. If you want to contact me, feel free to do so emailing me at <a href="mailto:alex.batlle01@gmail.com?subject=GitHub%20NeuralNetwork%20contact">alex.batlle01@gmail.com</a>.</p>
+<h2 id="to-do-list.">4. To-Do list.</h2>
+<p>To-do list in order of priority:</p>
+<ul>
+<li>Write more documentation.</li>
+<li>CLI to create, save, load and train objects of the declared classes.</li>
+<li>Additional library to read and write data to files.</li>
+</ul>

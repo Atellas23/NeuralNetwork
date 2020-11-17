@@ -1,2 +1,0 @@
-load data test .test/testdata
-create model testmodel 2 1 0

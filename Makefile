@@ -11,4 +11,6 @@ testrun: clean console
 	make clean
 
 documentation:
-	pandoc doc/doc.last.md -o doc/doc.last.html
+	pandoc doc/neural.md -o doc/'Neural Documentation.html'
+	pandoc doc/console.md -o doc/'Console Documentation.html'
+	pandoc doc/datahandler.md -o doc/'DataHandler Documentation.html'
