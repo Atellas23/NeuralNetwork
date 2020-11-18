@@ -78,3 +78,4 @@ My name's Àlex. I'm a student at **Universitat Politècnica de Catalunya (UPC-B
 To-do list in order of priority:
 
 - Write more documentation.
+- Fix bugs in the dataFrame.print() method.
