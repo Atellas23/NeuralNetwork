@@ -30,6 +30,10 @@ string redify(string s)
 {
   return "\x1B[31m" + s + "\033[0m";
 }
+string greenify(string s)
+{
+  return "\x1B[32m" + s + "\033[0m";
+}
 void main_stream(const vs &c);
 
 void save_log(string filename, const vs &what = consoleLog)
@@ -273,7 +277,7 @@ void printDatasetNames()
 {
   int datasetNum = 0;
   for (auto p : datasets)
-    cout << ++datasetNum << ": " + p.first << endl;
+    cout << ++datasetNum << ": " + greenify(p.first) << endl;
 }
 
 void modelEditSubconsole(const string &modelname)

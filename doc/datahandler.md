@@ -30,14 +30,13 @@ Throughout the documentation (and the code itself) `vd` is used as a `vector<dou
 
 ## 2. Review of the `dataFrame` class.
 
-The `dataFrame` class is the only class declared in this header file. It implements the common concept of a dataset or data frame. Although still in development, it supports numerical matrices with named columns. The class can read from a file, write to a file, wrtie data to the console, retrieve its underlying data and the names of each column.
+The `dataFrame` class is the only class declared in this header file. It implements the usual concept of a dataset or data frame. Although still in development, it supports numerical matrices with named columns. The class can read from a file, write to a file, wrtie data to the console, retrieve its underlying data and the names of each column. Its attributes are self-explanatory: `_name`, `_filepath`, `_data`, and `_colnames`.
 
 #### 2.0. Constructors.
 There is just one constructor for the `dataFrame` class, and it's the empty constructor. The idea here was to create an empty object that could then be used to load data. The constructor is:
 
 ```c++
-dataFrame() : _name(""), _filepath(""), _data(matd(0)), _colnames(vs(0)),
-              _rownames(vs(0)) {}
+dataFrame() : _name(""), _filepath(""), _data(matd(0)), _colnames(vs(0)) {}
 ```
 
 #### 2.1. Setters.
@@ -49,7 +48,6 @@ The following member functions can be used to set a `dataFrame` object attribute
 The following functions are used to get the value of the data frame attributes.
 - `matd getData() const`: it returns the data of the data frame in a matrix form.
 - `vs colnames() const`: returns the column names of the dataset.
-- `vs rownames() const`: returns the row names of the dataset (dev).
 
 #### 2.4. `void print() const`.
 This function prints the data frame to the console standard output, detailing its name and its file path relative to the one where the program is.

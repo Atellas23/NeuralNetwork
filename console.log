@@ -1,0 +1,23 @@
+load data test .testdata
+show datasets
+show data test
+load data test2 .test/testdata
+show datasets
+show data test2
+load data test3 .test/testdata
+show data test2
+show data test3
+load data test4 .test/testdata
+show data test4
+show datasets
+erase
+erase data
+erase dataset test4
+show datasets
+erase dataset test
+erase dataset test2
+show datasets
+show data test3
+erase dataset test3
+show dataset
+show datasets
